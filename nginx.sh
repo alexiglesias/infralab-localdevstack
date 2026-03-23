@@ -1,6 +1,11 @@
 #!/bin/bash
 set -e
 
+echo ">>> Adding hosts entries..."
+echo "192.168.56.12 app01" >> /etc/hosts
+echo "192.168.56.15 db01" >> /etc/hosts
+echo "192.168.56.14 mc01" >> /etc/hosts
+echo "192.168.56.16 rmq01" >> /etc/hosts
 
 echo ">>> Installing Nginx..."
 apt update -y
