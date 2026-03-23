@@ -3,9 +3,6 @@ set -e
 
 echo ">>> Adding hosts entries..."
 echo "192.168.56.12 app01" >> /etc/hosts
-echo "192.168.56.15 db01" >> /etc/hosts
-echo "192.168.56.14 mc01" >> /etc/hosts
-echo "192.168.56.16 rmq01" >> /etc/hosts
 
 echo ">>> Installing Nginx..."
 apt update -y
@@ -35,7 +32,7 @@ EOF
 
 echo ">>> Enabling site..."
 rm -f /etc/nginx/sites-enabled/default
-ln -s /etc/nginx/sites-available/infralab /etc/nginx/sites-enabled/infralab
+ln -sf /etc/nginx/sites-available/infralab /etc/nginx/sites-enabled/infralab
 
 
 echo ">>> Starting Nginx..."

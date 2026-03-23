@@ -4,8 +4,8 @@ set -e
 DATABASE_PASS='infralab2024'
 
 echo ">>> Installing MariaDB..."
-apt update -y
-apt install -y mariadb-server
+dnf update -y
+dnf install -y mariadb-server git
 
 echo ">>> Starting MariaDB..."
 systemctl start mariadb
