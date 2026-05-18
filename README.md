@@ -90,7 +90,7 @@ open https://192.168.56.11/
 ```
 
 Accept the self-signed certificate warning in your browser (the cert
-simulates AWS ACM in production — see the migration plan for what changes).
+simulates AWS ACM in production, see the migration plan for what changes).
 
 **Credentials:**
 
@@ -99,7 +99,7 @@ simulates AWS ACM in production — see the migration plan for what changes).
 | `admin`  | `asongoficeandfire`    |
 
 Stored as a bcrypt hash in `db_backup.sql`. This is a local-only demo
-account — production deployments would use a proper IAM or LDAP integration
+account. Production deployments would use a proper IAM or LDAP integration
 (documented in the migration plan).
 
 ## Provider support
@@ -159,7 +159,7 @@ plugin writes `/etc/hosts` entries on every VM as they boot. From `app01`,
 `ping db01` works because hostmanager added `192.168.56.15 db01` to its
 `/etc/hosts`.
 
-In production AWS, this is replaced by **Route 53 private hosted zones** —
+In production AWS, this is replaced by **Route 53 private hosted zones**,
 same UX (`db01.vprofile.internal`), different mechanism. See the
 [migration plan](docs/aws-migration-plan.md) for details.
 
@@ -182,8 +182,7 @@ matrix and its AWS Security Group equivalent are in
 
 ## AWS migration
 
-This stack maps 1:1 to managed AWS services. The local-versus-production
-mapping is the actual portfolio value here:
+This stack maps 1:1 to managed AWS services.
 
 | Local component        | AWS production equivalent                |
 |------------------------|------------------------------------------|
@@ -234,7 +233,7 @@ All 13 checks passed.
   so they have to come up first. Default parallel mode breaks this.
 - **`vagrant-hostmanager` is the right abstraction for local Route 53.**
   Hardcoding IPs in `application.properties` would couple the app to the
-  exact subnet — using hostnames is portable and matches what real AWS DNS
+  exact subnet. Using hostnames is portable and matches what real AWS DNS
   looks like.
 - **`firewalld` zones model AWS Security Groups well.** Both are
   source-IP-and-port allow-lists, both default-deny. Practicing one teaches
