@@ -1,7 +1,7 @@
 # infralab-localdevstack
 
 > A 5-VM local Java application stack (Nginx → Tomcat → MariaDB + Memcached
-> + RabbitMQ) fully automated with Vagrant. The architecture mirrors a
+> \+ RabbitMQ) fully automated with Vagrant. The architecture mirrors a
 > production AWS deployment 1:1, with [`docs/aws-migration-plan.md`](docs/aws-migration-plan.md)
 > documenting the service mapping and migration plan. Zero cloud spend.
 
