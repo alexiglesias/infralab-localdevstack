@@ -38,14 +38,14 @@ application and containerizes it with Docker + Kubernetes.
 
 ```mermaid
 flowchart LR
-    User[Browser] -->|HTTPS 443| WEB[web01<br/>192.168.56.11<br/>Nginx]
-    WEB -->|HTTP 8080| APP[app01<br/>192.168.56.12<br/>Tomcat 10 + Java 17]
+    User[Browser] -->|HTTPS 443| WEB[web01<br/>192.168.57.11<br/>Nginx]
+    WEB -->|HTTP 8080| APP[app01<br/>192.168.57.12<br/>Tomcat 10 + Java 17]
 
-    APP -->|3306| DB[db01<br/>192.168.56.15<br/>MariaDB 10.5]
-    APP -->|11211| MC[mc01<br/>192.168.56.14<br/>Memcached]
-    APP -->|5672| RMQ[rmq01<br/>192.168.56.16<br/>RabbitMQ]
+    APP -->|3306| DB[db01<br/>192.168.57.15<br/>MariaDB 10.5]
+    APP -->|11211| MC[mc01<br/>192.168.57.14<br/>Memcached]
+    APP -->|5672| RMQ[rmq01<br/>192.168.57.16<br/>RabbitMQ]
 
-    subgraph Private network 192.168.56.0/24
+    subgraph Private network 192.168.57.0/24
         WEB
         APP
         DB
@@ -63,30 +63,29 @@ groups.
 
 | VM      | IP              | OS                | Memory | Role                                              |
 |---------|-----------------|-------------------|--------|---------------------------------------------------|
-| `web01` | 192.168.56.11   | CentOS Stream 9   | 512 MB | Nginx reverse proxy, HTTPS termination            |
-| `app01` | 192.168.56.12   | CentOS Stream 9   | 2 GB   | Tomcat 10 + Java 17, hosts the deployed WAR       |
-| `mc01`  | 192.168.56.14   | CentOS Stream 9   | 512 MB | Memcached for session and query caching           |
-| `db01`  | 192.168.56.15   | CentOS Stream 9   | 1 GB   | MariaDB 10.5 with the application schema          |
-| `rmq01` | 192.168.56.16   | CentOS Stream 9   | 1 GB   | RabbitMQ message broker for async work            |
+| `web01` | 192.168.56.21   | CentOS Stream 9   | 512 MB | Nginx reverse proxy, HTTPS termination            |
+| `app01` | 192.168.56.22   | CentOS Stream 9   | 2 GB   | Tomcat 10 + Java 17, hosts the deployed WAR       |
+| `mc01`  | 192.168.56.24   | CentOS Stream 9   | 512 MB | Memcached for session and query caching           |
+| `db01`  | 192.168.56.25   | CentOS Stream 9   | 1 GB   | MariaDB 10.5 with the application schema          |
+| `rmq01` | 192.168.56.23   | CentOS Stream 9   | 1 GB   | RabbitMQ message broker for async work            |
 
-Total resource budget: 5 GB RAM, 5 CPU cores. Comfortably fits on a laptop
-with 16 GB.
+Total resource budget: 6.5 GB RAM, 5 CPU cores. 
 
 ## Quick start
 
 ```bash
 # 1. Install the vagrant-hostmanager plugin (once per machine)
 vagrant plugin install vagrant-hostmanager
+vagrant plugin install vagrant-vmware-desktop
 
 # 2. Bring up all 5 VMs in dependency order
-make up
-# (equivalent to: vagrant up --no-parallel)
+vagrant up --no-parallel --provider=vmware_desktop
 
 # 3. Verify the stack is healthy
 make smoketest
 
 # 4. Open the application
-open https://192.168.56.11/
+open https://192.168.56.21/
 ```
 
 Accept the self-signed certificate warning in your browser (the cert
@@ -96,29 +95,15 @@ simulates AWS ACM in production, see the migration plan for what changes).
 
 | Username | Password               |
 |----------|------------------------|
-| `admin`  | `asongoficeandfire`    |
-
-Stored as a bcrypt hash in `db_backup.sql`. This is a local-only demo
-account. Production deployments would use a proper IAM or LDAP integration
-(documented in the migration plan).
+| `admin_vp`  | `admin_vp`    |
 
 ## Provider support
 
-Vagrant auto-detects whichever hypervisor you have installed.
+This project targets Apple Silicon Macs (M1/M2/M3/M4) using VMware Fusion.
 
 | OS                              | Provider          | Notes                                  |
 |---------------------------------|-------------------|----------------------------------------|
-| Linux / Windows / Intel Mac     | VirtualBox 7+     | Free, default                          |
 | Apple Silicon Mac (M1/M2/M3/M4) | VMware Fusion     | Free for personal use since Nov 2024   |
-
-Force one explicitly:
-
-```bash
-vagrant up --no-parallel --provider=virtualbox
-vagrant up --no-parallel --provider=vmware_desktop
-```
-
-See [`docs/setup.md`](docs/setup.md) for per-OS installation instructions.
 
 ## Files
 
@@ -129,6 +114,7 @@ infralab-localdevstack/
 ├── db_backup.sql                # seed schema + data for MariaDB
 ├── provisioning/
 │   ├── mysql.sh                 # db01: MariaDB + seed import
+from vprofile repo
 │   ├── memcache.sh              # mc01: Memcached
 │   ├── rabbitmq.sh              # rmq01: Erlang + RabbitMQ + user
 │   ├── tomcat.sh                # app01: Java 17 + Maven build + Tomcat 10
@@ -156,7 +142,7 @@ rabbitmq.address=rmq01
 These hostnames resolve because the
 [`vagrant-hostmanager`](https://github.com/devopsgroup-io/vagrant-hostmanager)
 plugin writes `/etc/hosts` entries on every VM as they boot. From `app01`,
-`ping db01` works because hostmanager added `192.168.56.15 db01` to its
+`ping db01` works because hostmanager added `192.168.57.15 db01` to its
 `/etc/hosts`.
 
 In production AWS, this is replaced by **Route 53 private hosted zones**,
@@ -167,7 +153,6 @@ same UX (`db01.vprofile.internal`), different mechanism. See the
 
 | Source           | Destination       | Port  | Why                                |
 |------------------|-------------------|-------|------------------------------------|
-| Host             | web01             | 443   | User-facing HTTPS                  |
 | Host             | web01             | 80    | Redirects to HTTPS                 |
 | web01            | app01             | 8080  | Reverse-proxy backend              |
 | app01            | db01              | 3306  | MariaDB                            |
@@ -175,14 +160,7 @@ same UX (`db01.vprofile.internal`), different mechanism. See the
 | app01            | rmq01             | 5672  | RabbitMQ                           |
 | everyone else    | anything backend  | -     | denied by firewalld                |
 
-This is enforced by `firewalld` zones on each backend VM, allowing the
-application subnet (`192.168.56.0/24`) only on the relevant port. The full
-matrix and its AWS Security Group equivalent are in
-[`docs/network-topology.md`](docs/network-topology.md).
-
 ## AWS migration
-
-This stack maps 1:1 to managed AWS services.
 
 | Local component        | AWS production equivalent                |
 |------------------------|------------------------------------------|
@@ -192,7 +170,6 @@ This stack maps 1:1 to managed AWS services.
 | Memcached on `mc01`    | ElastiCache (Memcached engine)           |
 | RabbitMQ on `rmq01`    | Amazon MQ (RabbitMQ engine)              |
 | `/etc/hosts` via plugin | Route 53 Private Hosted Zone            |
-| Self-signed cert       | AWS Certificate Manager (free)           |
 | `firewalld` zones      | VPC Security Groups                      |
 
 The full migration plan, with cost estimate and Terraform pseudocode, is in
@@ -201,7 +178,7 @@ mapping is in [`docs/gcp-equivalence.md`](docs/gcp-equivalence.md).
 
 ## Smoke testing
 
-After `make up` completes, `make smoketest` runs a layered check:
+After the set up completes, `make smoketest` runs a layered check:
 
 1. **L1 — Network:** every VM responds to ping
 2. **L2 — Ports:** every service is listening on its expected port
@@ -214,8 +191,8 @@ infralab smoke test
 ===================
 
 L1: Network reachability
-  db01 (192.168.56.15) responds to ping              OK
-  mc01 (192.168.56.14) responds to ping              OK
+  db01 (192.168.57.15) responds to ping              OK
+  mc01 (192.168.57.14) responds to ping              OK
   ...
 
 L3: Application response
