@@ -38,7 +38,12 @@ flowchart LR
     end
 ```
 
-All five VMs sit on a private network. The host machine reaches the application via Nginx on `web01`. Nginx acts as a reverse proxy, forwarding the request to `app01` on port 8080. The Java application running in Tomcat receives the request. If it needs data it uses MariaDB (port 3306) to query user accounts, product info, order history, Memcached (port 11211) to check if the data is already cached (faster than database), and RabbitMQ (port 5672) to queue async tasks (email notifications, background jobs). Tomcat sends the response back to Nginx, which forwards it over HTTPS back to your browser. Firewalls (`firewalld`) on each backend VM allow traffic only from the application subnet, simulating AWS security groups.
+All five VMs sit on a private network. The host machine reaches the application via Nginx on `web01`. 
+Nginx acts as a reverse proxy, forwarding the request to `app01` on port 8080. 
+The Java application running in Tomcat receives the request. 
+If it needs data it uses MariaDB `db01` on port 3306 to query user accounts, product info, order history, Memcached `mc01` on port 11211 to check if the data is already cached (faster than database), and RabbitMQ `rmq01` on port 5672 to queue async tasks (email notifications, background jobs). 
+Tomcat sends the response back to Nginx, which forwards it over HTTPS back to your browser. 
+Firewalls (`firewalld`) on each backend VM allow traffic only from the application subnet, simulating AWS security groups.
 
 ### Service responsibilities
 
