@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 #
-# smoketest.sh — verify the full stack is healthy.
+# test.sh — verify the full stack is healthy.
 #
 # Run from the host AFTER `vagrant up --no-parallel` has completed.
 
@@ -27,7 +27,7 @@ check() {
     fi
 }
 
-echo "infralab smoke test"
+echo "infralab test"
 echo "==================="
 echo ""
 

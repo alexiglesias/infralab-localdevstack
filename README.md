@@ -1,38 +1,22 @@
 # infralab-localdevstack
 
-> A 5-VM local Java application stack (Nginx → Tomcat → MariaDB + Memcached
-> \+ RabbitMQ) fully automated with Vagrant. The architecture mirrors a
-> production AWS deployment 1:1, with [`docs/aws-migration-plan.md`](docs/aws-migration-plan.md)
-> documenting the service mapping and migration plan. Zero cloud spend.
+> A 5-VM local Java application stack (Nginx → Tomcat → MariaDB + Memcached + RabbitMQ) fully automated with Vagrant. The architecture mirrors a production AWS deployment 1:1, with [`docs/aws-migration-plan.md`](docs/aws-migration-plan.md) documenting the service mapping and migration plan. This project targets Apple Silicon Macs (M1/M2/M3/M4) using VMware Fusion.
 
 [![license](https://img.shields.io/badge/license-MIT-blue)](./LICENSE)
 [![vagrant](https://img.shields.io/badge/vagrant-2.4%2B-blue)](https://www.vagrantup.com/)
 [![os](https://img.shields.io/badge/os-CentOS%20Stream%209-orange)](https://www.centos.org/)
 
-## What this is
+## What's in here
 
-A full lift-and-shift deployment of a 3-tier Java web application running
-across five virtual machines on your laptop. The stack is the
-[VProfile](https://github.com/hkhcoder/vprofile-project) reference
-application, chosen because it exercises every layer a typical enterprise
-Java service depends on: a relational database, a caching layer, a message
-broker, an application container, and a reverse-proxy web server.
+A full lift-and-shift deployment of a 3-tier Java web application running across five virtual machines on your laptop. The application that runs on top of the infrastructure this project is building is the [VProfile](https://github.com/hkhcoder/vprofile-project) application. This application has been chosen because it exercises every layer a typical enterprise Java service depends on: a relational database, a caching layer, a message broker, an application container, and a reverse-proxy web server.
 
-The lab exists for two reasons:
+## Requirements    
 
-1. **Hands-on Linux + multi-service provisioning practice.** Five VMs, five
-   different services, real firewalls, real network segmentation, real
-   service-to-service authentication. Closer to a production server fleet
-   than any single-VM tutorial.
-2. **A documented blueprint for the AWS equivalent.** Every component maps
-   to an AWS service: EC2 + ALB + RDS + ElastiCache + Amazon MQ. The local
-   stack runs for free; the [migration plan](docs/aws-migration-plan.md)
-   shows exactly what changes when you deploy it to AWS, including a cost
-   estimate and Terraform pseudocode.
-
-This is the second project in a six-project DevOps portfolio plan, focused
-on the Cloud (AWS + GCP) phase. The third project takes the same
-application and containerizes it with Docker + Kubernetes.
+- **Vagrant 2.4+** 
+- VMware Fusion 13+ (Apple Silicon)
+- **5 GB free RAM** for the VMs
+- **`vagrant-hostmanager` plugin** (install with `vagrant plugin install vagrant-hostmanager`)
+- **On VMware:** the `vagrant-vmware-desktop` plugin         
 
 ## Architecture
 
@@ -54,10 +38,7 @@ flowchart LR
     end
 ```
 
-All five VMs sit on a private network. The host machine reaches the
-application via Nginx on `web01`. Firewalls (`firewalld`) on each backend
-VM allow traffic only from the application subnet, simulating AWS security
-groups.
+All five VMs sit on a private network. The host machine reaches the application via Nginx on `web01`. Firewalls (`firewalld`) on each backend VM allow traffic only from the application subnet, simulating AWS security groups.
 
 ### Service responsibilities
 
@@ -82,7 +63,7 @@ vagrant plugin install vagrant-vmware-desktop
 vagrant up --no-parallel --provider=vmware_desktop
 
 # 3. Verify the stack is healthy
-make smoketest
+make test
 
 # 4. Open the application
 open https://192.168.56.21/
@@ -91,43 +72,26 @@ open https://192.168.56.21/
 Accept the self-signed certificate warning in your browser (the cert
 simulates AWS ACM in production, see the migration plan for what changes).
 
-**Credentials:**
+## Application Credentials
+Login to the web application at https://192.168.57.11/
+- Username: admin_vp
+- Password: admin_vp
 
-| Username | Password               |
-|----------|------------------------|
-| `admin_vp`  | `admin_vp`    |
+## Service Credentials (for debugging/inspection)
+If you SSH into backend VMs for troubleshooting:
 
-## Provider support
+### Database (db01)
+- Root: mysql -u root -padmin123
+- App user: mysql -u admin -padmin123 -h db01 accounts
 
-This project targets Apple Silicon Macs (M1/M2/M3/M4) using VMware Fusion.
+### RabbitMQ (rmq01)
+- User: test
+- Password: test
+- Management UI: http://192.168.57.16:15672 (test / test)
 
-| OS                              | Provider          | Notes                                  |
-|---------------------------------|-------------------|----------------------------------------|
-| Apple Silicon Mac (M1/M2/M3/M4) | VMware Fusion     | Free for personal use since Nov 2024   |
-
-## Files
-
-```
-infralab-localdevstack/
-├── Vagrantfile                  # 5-VM definition, dual-provider
-├── Makefile                     # make up, make smoketest, ...
-├── db_backup.sql                # seed schema + data for MariaDB
-├── provisioning/
-│   ├── mysql.sh                 # db01: MariaDB + seed import
-from vprofile repo
-│   ├── memcache.sh              # mc01: Memcached
-│   ├── rabbitmq.sh              # rmq01: Erlang + RabbitMQ + user
-│   ├── tomcat.sh                # app01: Java 17 + Maven build + Tomcat 10
-│   └── nginx.sh                 # web01: Nginx reverse proxy + self-signed cert
-├── scripts/
-│   └── smoketest.sh             # end-to-end health check (network + ports + HTTP)
-└── docs/
-    ├── setup.md                 # per-OS install guide
-    ├── architecture.md          # detailed component walkthrough
-    ├── network-topology.md      # IP plan, hostname resolution, port matrix
-    ├── aws-migration-plan.md    # service mapping, costs, Terraform sketch
-    └── gcp-equivalence.md       # same mapping for Google Cloud
-```
+### Memcached (mc01)
+- No authentication required
+- Telnet to 192.168.57.14:11211
 
 ## How the VMs find each other
 
@@ -138,16 +102,9 @@ jdbc.url=jdbc:mysql://db01:3306/accounts
 memcached.active.host=mc01
 rabbitmq.address=rmq01
 ```
+These hostnames resolve because the [`vagrant-hostmanager`](https://github.com/devopsgroup-io/vagrant-hostmanager) plugin writes `/etc/hosts` entries on every VM as they boot. From `app01`, `ping db01` works because hostmanager added `192.168.57.15 db01` to its `/etc/hosts`.
 
-These hostnames resolve because the
-[`vagrant-hostmanager`](https://github.com/devopsgroup-io/vagrant-hostmanager)
-plugin writes `/etc/hosts` entries on every VM as they boot. From `app01`,
-`ping db01` works because hostmanager added `192.168.57.15 db01` to its
-`/etc/hosts`.
-
-In production AWS, this is replaced by **Route 53 private hosted zones**,
-same UX (`db01.vprofile.internal`), different mechanism. See the
-[migration plan](docs/aws-migration-plan.md) for details.
+In production AWS, this is replaced by **Route 53 private hosted zones**, same UX (`db01.vprofile.internal`), different mechanism. See the [migration plan](docs/aws-migration-plan.md) for details.
 
 ## Security model
 
@@ -172,13 +129,11 @@ same UX (`db01.vprofile.internal`), different mechanism. See the
 | `/etc/hosts` via plugin | Route 53 Private Hosted Zone            |
 | `firewalld` zones      | VPC Security Groups                      |
 
-The full migration plan, with cost estimate and Terraform pseudocode, is in
-[`docs/aws-migration-plan.md`](docs/aws-migration-plan.md). GCP service
-mapping is in [`docs/gcp-equivalence.md`](docs/gcp-equivalence.md).
+The full migration plan, with cost estimate and Terraform pseudocode, is in [`docs/aws-migration-plan.md`](docs/aws-migration-plan.md). GCP service mapping is in [`docs/gcp-equivalence.md`](docs/gcp-equivalence.md).
 
-## Smoke testing
+## Testing
 
-After the set up completes, `make smoketest` runs a layered check:
+After the set up completes, `make test` runs a layered check:
 
 1. **L1 — Network:** every VM responds to ping
 2. **L2 — Ports:** every service is listening on its expected port
@@ -187,7 +142,7 @@ After the set up completes, `make smoketest` runs a layered check:
 Output looks like:
 
 ```
-infralab smoke test
+infralab test
 ===================
 
 L1: Network reachability
@@ -231,6 +186,29 @@ All 13 checks passed.
 - **5 GB free RAM** for the VMs
 - **`vagrant-hostmanager` plugin** (install with `vagrant plugin install vagrant-hostmanager`)
 - **On VMware:** the `vagrant-vmware-desktop` plugin
+
+## Project Layout
+
+```
+infralab-localdevstack/
+?~T~\?~T~@?~T~@ Vagrantfile                  # 5-VM definition, dual-provider
+?~T~\?~T~@?~T~@ Makefile                     # make up, make test, ...
+?~T~\?~T~@?~T~@ db_backup.sql                # seed schema + data for MariaDB
+?~T~\?~T~@?~T~@ provisioning/
+?~T~B   ?~T~\?~T~@?~T~@ mysql.sh                 # db01: MariaDB + vprofile seed import
+?~T~B   ?~T~\?~T~@?~T~@ memcache.sh              # mc01: Memcached
+?~T~B   ?~T~\?~T~@?~T~@ rabbitmq.sh              # rmq01: Erlang + RabbitMQ + user
+?~T~B   ?~T~\?~T~@?~T~@ tomcat.sh                # app01: Java 17 + Maven build + Tomcat 10
+?~T~B   ?~T~T?~T~@?~T~@ nginx.sh                 # web01: Nginx reverse proxy + self-signed cert
+?~T~\?~T~@?~T~@ scripts/
+?~T~B   ?~T~T?~T~@?~T~@ test.sh             # end-to-end health check (network + ports + HTTP)
+?~T~T?~T~@?~T~@ docs/
+    ?~T~\?~T~@?~T~@ setup.md                 # per-OS install guide
+    ?~T~\?~T~@?~T~@ architecture.md          # detailed component walkthrough
+    ?~T~\?~T~@?~T~@ network-topology.md      # IP plan, hostname resolution, port matrix
+    ?~T~\?~T~@?~T~@ aws-migration-plan.md    # service mapping, costs, Terraform sketch
+    ?~T~T?~T~@?~T~@ gcp-equivalence.md       # same mapping for Google Cloud
+```
 
 ## License
 

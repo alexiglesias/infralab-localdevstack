@@ -147,7 +147,7 @@ Honest limits worth knowing for interviews:
   config files. AWS would use Secrets Manager or Parameter Store. The
   migration plan covers this.
 - **No real load.** Locust or k6 would exercise the cache and message
-  broker meaningfully; smoke tests only prove things are listening.
+  broker meaningfully; tests only prove things are listening.
 
 These aren't failures of the lab — they're scope decisions. A local
 five-VM lab can't simulate Multi-AZ; that's what real AWS is for. The

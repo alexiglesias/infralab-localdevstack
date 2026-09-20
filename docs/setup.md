@@ -62,7 +62,7 @@ Total time on a recent laptop: about 15 minutes for the first run
 ## Verify
 
 ```bash
-make smoketest
+make test
 ```
 
 If all checks pass, open `https://192.168.57.11/` in your browser. Accept

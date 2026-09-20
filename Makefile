@@ -1,4 +1,4 @@
-.PHONY: help up down halt destroy provision status smoketest ssh-web ssh-app ssh-db lint
+.PHONY: help up down halt destroy provision status test ssh-web ssh-app ssh-db lint
 
 help:  ## Show this help
 	@grep -E '^[a-zA-Z_-]+:.*?## ' $(MAKEFILE_LIST) | awk 'BEGIN {FS = ":.*?## "}; {printf "  %-15s %s\n", $$1, $$2}'
@@ -18,8 +18,8 @@ status:  ## Show status of all VMs
 provision:  ## Re-run provisioning scripts on existing VMs
 	vagrant provision
 
-smoketest:  ## Run the smoke test against the running stack
-	@bash scripts/smoketest.sh
+test:  ## Run the test against the running stack
+	@bash scripts/test.sh
 
 ssh-web:  ## SSH into the Nginx VM
 	vagrant ssh web01
