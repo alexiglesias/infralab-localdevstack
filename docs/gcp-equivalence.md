@@ -1,8 +1,6 @@
 # GCP Equivalence
 
-The same stack mapped to Google Cloud Platform services. Shorter than the
-AWS migration plan because GCP coverage in this portfolio is intentionally
-brief — the bulk of the cloud work targets AWS.
+The same stack mapped to Google Cloud Platform services. Shorter than the AWS migration plan because GCP coverage in this portfolio is intentionally brief — the bulk of the cloud work targets AWS.
 
 ## Service mapping
 
@@ -32,21 +30,11 @@ equivalent. Three options:
 
 For a portfolio mapping, option 1 is the simplest to document.
 
-**Different default model for high availability.** AWS expresses HA as
-"Multi-AZ" — explicit second instance in another AZ. GCP often expresses
-HA as "regional" — a service that's automatically replicated across zones
-in the region. Cloud SQL HA, Memorystore Standard tier, and regional MIGs
-all use the regional model.
+**Different default model for high availability.** AWS expresses HA as "Multi-AZ" — explicit second instance in another AZ. GCP often expresses HA as "regional" — a service that's automatically replicated across zones in the region. Cloud SQL HA, Memorystore Standard tier, and regional MIGs all use the regional model.
 
-**Firewall rules are at the VPC level, not per-resource.** On AWS, each EC2
-instance has its own Security Group attached. On GCP, firewall rules apply
-to the whole VPC and use **network tags** to select which instances they
-match. Conceptually the same allow-list pattern, mechanically different.
+**Firewall rules are at the VPC level, not per-resource.** On AWS, each EC2 instance has its own Security Group attached. On GCP, firewall rules apply to the whole VPC and use **network tags** to select which instances they match. Conceptually the same allow-list pattern, mechanically different.
 
-**Identity model is service accounts, not IAM roles.** AWS has "an IAM
-role attached to an instance." GCP has "a Service Account attached to a
-VM." The Service Account's permissions define what the VM can do with
-GCP APIs. Same idea, different name.
+**Identity model is service accounts, not IAM roles.** AWS has "an IAM role attached to an instance." GCP has "a Service Account attached to a VM." The Service Account's permissions define what the VM can do with GCP APIs. Same idea, different name.
 
 ## Cost ballpark
 
@@ -72,52 +60,3 @@ Comparable to AWS within ~10%, with the main differences being:
 - GCP's Memorystore is more expensive than ElastiCache Memcached
 - Self-hosted RabbitMQ is cheaper than Amazon MQ (no managed-service premium)
 
-For a learning project, the **GCP Free Tier** provides:
-
-- $300 in credits for 90 days for new accounts
-- "Always free" tier: 1 × e2-micro per month, 5 GB Cloud Storage,
-  Cloud Build minutes, etc.
-
-That's enough to deploy a stripped-down version of this stack (1 e2-micro
-VM running both Tomcat and SQLite in place of Cloud SQL) for under
-$300 over 90 days — making GCP actually the cheapest "I deployed to a
-real cloud" entry in this portfolio.
-
-## What I'd actually do for a portfolio GCP deployment
-
-If I were building this for real on GCP using the $300 free credit:
-
-1. Single `e2-small` Compute Engine VM running Tomcat
-2. Cloud SQL `db-f1-micro` instance (the cheapest tier) for MariaDB
-3. Skip the cache tier entirely (use in-memory caching in Tomcat instead)
-4. Skip the message broker tier (replace with synchronous calls)
-5. Cloud Load Balancing with a managed SSL cert for HTTPS
-6. **One screenshot of the deployed app at a `*.run.app` URL**
-
-That last item is the deliverable. Costs maybe $30–40 of the $300 credit
-over a weekend. Tear it down after taking the screenshot. Now you have an
-honest "deployed on GCP" line on your resume.
-
-For the purposes of *this* portfolio project, the documented mapping above
-is enough. The actual GCP deployment is a stretch goal for whoever has
-time after Project 6.
-
-## Multi-cloud portability — what the lab teaches
-
-Building this on AWS, GCP, *and* locally with the same application code is
-the actual signal worth highlighting. Three different infrastructure
-models, one Java WAR. The lab proves:
-
-- The application has no cloud-specific code
-- All cloud-specific configuration lives in environment variables /
-  config files
-- Database, cache, and message broker are accessed by hostname, so
-  swapping `db.vprofile.internal` from a Route 53 record to a Cloud DNS
-  record is a config change, not a code change
-
-That's the portability story. In interviews, the framing is:
-
-> *"The application code is identical across local Vagrant, AWS, and GCP.
-> What changes is the surrounding infrastructure config, which lives in
-> Terraform. I built it this way intentionally so the lift-and-shift cost
-> to a second cloud is minimal."*

@@ -1,10 +1,6 @@
 # AWS Migration Plan
 
-How the local 5-VM stack maps to a production AWS deployment, with cost
-estimates and Terraform pseudocode for each piece.
-
-This is the document that turns the lab from "I followed a Vagrant
-tutorial" into "I understand the AWS architecture this represents."
+How the local 5-VM stack maps to a production AWS deployment, with cost estimates. 
 
 ## Headline mapping
 
@@ -36,14 +32,11 @@ VPC 10.0.0.0/16
     └── private subnet 10.0.4.0/24   (Tomcat, RDS standby, ElastiCache replica)
 ```
 
-Multi-AZ matters because real AWS deployments survive an entire data
-center going down. The local lab doesn't simulate this — that's what
-real cloud is for.
+Multi-AZ matters because real AWS deployments survive an entire data center going down. The local lab doesn't simulate this — that's what real cloud is for.
 
 ## Cost estimate
 
-Conservative ballpark for a 24/7 production-quality deployment. Region:
-`us-east-1`. As of mid-2026:
+Conservative ballpark for a 24/7 production-quality deployment. Region: `us-east-1`. As of mid-2026:
 
 | Service                        | Configuration               | Monthly cost |
 |--------------------------------|-----------------------------|--------------|
@@ -60,21 +53,7 @@ Conservative ballpark for a 24/7 production-quality deployment. Region:
 | CloudWatch (basic)             | Standard metrics, no logs   | ~$5          |
 | **Total**                      |                             | **~$215/mo** |
 
-Optimizations that would lower this:
-
-- Single-AZ NAT Gateway (sacrifices HA for egress) → saves $32
-- RDS not Multi-AZ → saves ~$30 (sacrifices automatic failover)
-- Spot instances for Tomcat ASG → saves ~50% on EC2
-- Reserved Instances or Savings Plans (1-year) → saves ~30% across the board
-
-A "demo-style" config (single AZ, no Multi-AZ RDS, smallest instance sizes)
-would run around **$80/month**. That's the realistic "I deployed my own
-side project to AWS" budget for someone learning.
-
-## Terraform skeleton
-
-A real Terraform implementation lives in the future Project 4
-(`terraform-aws-vprofile-stack`). The skeleton below shows the shape:
+A "demo-style" config (single AZ, no Multi-AZ RDS, smallest instance sizes) would run around **$80/month**.
 
 ### VPC
 
@@ -238,42 +217,9 @@ memcached.active.host=cache.vprofile.internal
 rabbitmq.address=mq.vprofile.internal
 ```
 
-## What changes in the application code
-
-**Almost nothing.**
-
-The application connects to backends by hostname. In the lab, those
-hostnames resolve via `/etc/hosts`. In AWS, they resolve via Route 53.
-The application is unaware of which mechanism is in play.
-
 The only changes when going to production:
 
-1. `application.properties` reads hostnames from environment variables
-   (injected by the launch template's user-data) instead of being hardcoded.
-2. Database password comes from AWS Secrets Manager (fetched at startup
-   via the instance's IAM role) instead of being in the config file.
-3. The WAR is downloaded from S3 at boot instead of being copied during
-   provisioning.
+1. `application.properties` reads hostnames from environment variables (injected by the launch template's user-data) instead of being hardcoded.
+2. Database password comes from AWS Secrets Manager (fetched at startup via the instance's IAM role) instead of being in the config file.
+3. The WAR is downloaded from S3 at boot instead of being copied during provisioning.
 
-That's it. Three changes. The application code itself is identical
-between the lab and production. **This is the goal of any good
-local-to-production setup** — minimize the "in production this is
-different" surface area.
-
-## Things this plan deliberately doesn't cover
-
-- **Cross-region disaster recovery.** Out of scope for a 5-VM lab to model.
-  Would add a read-replica RDS in `us-west-2`, an S3 cross-region replica
-  bucket, and Route 53 health-check-based failover.
-- **WAF / Shield.** Real public services would add AWS WAF in front of the
-  ALB. ~$5/month base + per-rule charges.
-- **Logging pipeline.** CloudWatch Logs → Kinesis Firehose → S3 for
-  long-term retention. Not modeled locally — that's Project 6's territory.
-- **CI/CD.** Building the WAR and rolling it out to the ASG is Project 5
-  (`vprofile-cicd-pipeline`). The deployment model here assumes a working
-  pipeline pushes a new WAR to S3 and triggers an instance refresh.
-- **Cost monitoring.** Production would have AWS Budgets alerts at $50,
-  $100, $200 thresholds.
-
-These are all reasonable extensions, just not within the scope of this
-single project. The portfolio plan builds them up across the six projects.
