@@ -175,23 +175,23 @@ All 13 checks passed.
 
 ```
 infralab-localdevstack/
-?~T~\?~T~@?~T~@ Vagrantfile                  # 5-VM definition, dual-provider
-?~T~\?~T~@?~T~@ Makefile                     # make up, make test, ...
-?~T~\?~T~@?~T~@ db_backup.sql                # seed schema + data for MariaDB
-?~T~\?~T~@?~T~@ provisioning/
-?~T~B   ?~T~\?~T~@?~T~@ mysql.sh                 # db01: MariaDB + vprofile seed import
-?~T~B   ?~T~\?~T~@?~T~@ memcache.sh              # mc01: Memcached
-?~T~B   ?~T~\?~T~@?~T~@ rabbitmq.sh              # rmq01: Erlang + RabbitMQ + user
-?~T~B   ?~T~\?~T~@?~T~@ tomcat.sh                # app01: Java 17 + Maven build + Tomcat 10
-?~T~B   ?~T~T?~T~@?~T~@ nginx.sh                 # web01: Nginx reverse proxy + self-signed cert
-?~T~\?~T~@?~T~@ scripts/
-?~T~B   ?~T~T?~T~@?~T~@ test.sh             # end-to-end health check (network + ports + HTTP)
-?~T~T?~T~@?~T~@ docs/
-    ?~T~\?~T~@?~T~@ setup.md                 # per-OS install guide
-    ?~T~\?~T~@?~T~@ architecture.md          # detailed component walkthrough
-    ?~T~\?~T~@?~T~@ network-topology.md      # IP plan, hostname resolution, port matrix
-    ?~T~\?~T~@?~T~@ aws-migration-plan.md    # service mapping, costs, Terraform sketch
-    ?~T~T?~T~@?~T~@ gcp-equivalence.md       # same mapping for Google Cloud
+├── Vagrantfile                  # 5-VM definition, dual-provider
+├── Makefile                     # make up, make test, ...
+├── db_backup.sql                # seed schema + data for MariaDB
+├── provisioning/
+│   ├── mysql.sh                 # db01: MariaDB + vprofile seed import
+│   ├── memcache.sh              # mc01: Memcached
+│   ├── rabbitmq.sh              # rmq01: Erlang + RabbitMQ + user
+│   ├── tomcat.sh                # app01: Java 17 + Maven build + Tomcat 10
+│   └── nginx.sh                 # web01: Nginx reverse proxy + self-signed cert
+├── scripts/
+│   └── test.sh                  # end-to-end health check (network + ports + HTTP)
+└── docs/
+    ├── setup.md                 # per-OS install guide
+    ├── architecture.md          # detailed component walkthrough
+    ├── network-topology.md      # IP plan, hostname resolution, port matrix
+    ├── aws-migration-plan.md    # service mapping, costs, Terraform sketch
+    └── gcp-equivalence.md       # same mapping for Google Cloud
 ```
 
 ## License
