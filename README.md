@@ -196,4 +196,4 @@ infralab-localdevstack/
 
 ## License
 
-MIT — see [LICENSE](./LICENSE).
+[MIT](./LICENSE)
